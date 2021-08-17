@@ -2,6 +2,7 @@ const startFEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 class Board {
     constructor() {
+        this.turn = true; // true = white
         this.whitePieces = [];
         this.blackPieces = [];
         this.moves = [];
@@ -45,14 +46,7 @@ class Board {
         }
 
         const moveFEN = splitFEN[1];
-        switch (moveFEN) {
-            case 'w':
-                // White to move
-                break;
-            case 'b':
-                // Black to move
-                break;
-        }
+        this.turn = moveFEN == 'w' ? true : false;
 
         const castlingFEN = splitFEN[2];
         if (!dashes.includes(castlingFEN)) {
@@ -101,11 +95,12 @@ class Board {
     }
 
     select(piece) {
-        this.selected = piece;
-        piece.select();
-        main.fill(0, 0, 0, 80);
-        // main.rect(piece.pixelposition.x - tilesize / 2, piece.pixelposition.y - tilesize / 2, tilesize, tilesize);
-        main.ellipse(piece.pixelposition.x, piece.pixelposition.y, tilesize * 1.5);
+        if (piece.isWhite == this.turn) {
+            this.selected = piece;
+            piece.select();
+            main.fill(0, 0, 0, 80);
+            main.ellipse(piece.pixelposition.x, piece.pixelposition.y, tilesize * 1.5);
+        }
     }
 
     deselect(piece) {
@@ -125,6 +120,7 @@ class Board {
         this.enPassant = null;
         this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), this.getPieceAt(x, y)));
         this.selected.move(x, y);
+        this.turn = !this.turn; // Swap turns
     }
 
     show() {
