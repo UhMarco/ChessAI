@@ -118,7 +118,9 @@ class Board {
     move(x, y) {
         this.lastEnPassant = this.enPassant;
         this.enPassant = null;
-        this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), this.getPieceAt(x, y)));
+        let castle = false;
+        if (this.selected.type == 'king' && abs(x - this.selected.matrixposition.x) == 2) castle = true;
+        this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), this.getPieceAt(x, y), castle));
         this.selected.move(x, y);
         this.turn = !this.turn; // Swap turns
     }
