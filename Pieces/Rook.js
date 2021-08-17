@@ -35,6 +35,6 @@ class Rook extends Piece {
             }
         }
 
-        this.moves = moves;
+        super.generateMoves(moves);
     }
 }

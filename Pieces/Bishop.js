@@ -25,6 +25,6 @@ class Bishop extends Piece {
             }
         }
 
-        this.moves = moves;
+        super.generateMoves(moves);
     }
 }
