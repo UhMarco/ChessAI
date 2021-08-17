@@ -23,6 +23,8 @@ class Board {
         const dashes = ['-', '–'];
 
         const boardFEN = splitFEN[0];
+
+        // Logic for boardFEN reading borrowed from Sebastian Lague's Coding Adventure video.
         let file = 0, rank = 0;
 
         for (let i = 0; i < boardFEN.length; i++) {
