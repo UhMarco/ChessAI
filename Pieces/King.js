@@ -21,6 +21,30 @@ class King extends Piece {
         super.move(x, y);
     }
 
+    inCheck() {
+        /*
+        const enemyPieces = this.isWhite ? board.blackPieces : board.whitePieces;
+
+        for (let i = 0; i < enemyPieces.length; i++) {
+            const enemy = enemyPieces[i];
+            for (let k = 0; k < enemy.moves.length; k++) {
+                const [x, y] = enemy.moves[k];
+                console.log(x, y);
+                if (x == this.matrixposition.x && y == this.matrixposition.y) {
+                    console.log('check');
+                    return true;
+                }
+            }
+        }
+        */
+        this.generateMoves();
+        let moves = this.moves;
+        this.generateLegalMoves();
+        let legalMoves = this.moves;
+        if (moves.length != legalMoves.length) return true;
+        return false;
+    }
+
     generateMoves() {
         let moves = [];
 
@@ -48,6 +72,6 @@ class King extends Piece {
             }
         }
 
-        this.moves = moves;
+        super.generateMoves(moves);
     }
 }

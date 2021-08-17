@@ -13,7 +13,7 @@ class Board {
     }
 
     setupPieces() {
-        this.readFEN(startFEN);
+        this.readFEN('rnbqkbnr/pppppppp/8/8/1b5b/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
     }
 
     readFEN(FEN) {
@@ -117,6 +117,7 @@ class Board {
         highlights.clear();
         drawBoard();
         if (this.drawnLastMove) this.drawnLastMove -= 1; // Keep last move indication when changing selection.
+        this.showCheck();
     }
 
     move(x, y) {
@@ -138,11 +139,24 @@ class Board {
             main.rect(targetSquare.x * tilesize, targetSquare.y * tilesize, tilesize, tilesize);
 
         }
+
         for (let i = 0; i < this.whitePieces.length; i++) {
             this.whitePieces[i].show();
         }
         for (let i = 0; i < this.blackPieces.length; i++) {
             this.blackPieces[i].show();
+        }
+    }
+
+    showCheck() {
+        for (let i = 0; i < 2; i++) {
+            const pieces = i == 0 ? board.whitePieces : board.blackPieces;
+            const king = pieces.find(element => element.type == 'king');
+            if (king.inCheck()) {
+                const { x, y } = king.pixelposition;
+                main.fill(255, 0, 0, 100);
+                main.rect(x - tilesize / 2, y - tilesize / 2, tilesize, tilesize);
+            }
         }
     }
 

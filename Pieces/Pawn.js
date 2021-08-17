@@ -39,7 +39,6 @@ class Pawn extends Piece {
         // Normal move
         if (this.withinBounds(x, y) && !board.getPieceAt(x, y)) {
             moves.push([x, y]);
-
             // Double move
             if (!this.hasMoved && this.withinBounds(x, y + direction) && !board.getPieceAt(x, y + direction)) {
                 moves.push([x, y + direction]);
@@ -69,7 +68,6 @@ class Pawn extends Piece {
                 }
             }
         }
-
-        this.moves = moves;
+        super.generateMoves(moves);
     }
 }
