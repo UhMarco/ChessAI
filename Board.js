@@ -3,15 +3,20 @@ const startFEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 class Board {
     constructor() {
         this.frozen = false;
+
         this.pawnToPromote = null;
         this.turn = true; // true = white
         this.whitePieces = [];
         this.blackPieces = [];
+
+        this.selected = null;
         this.moves = [];
+        this.halfMoveClock = 0;
+        this.fullMoveClock = 0;
         this.drawnLastMove = 0;
         this.enPassant = null;
         this.lastEnPassant = null;
-        this.selected = null;
+
         this.setupPieces()
     }
 
@@ -19,65 +24,11 @@ class Board {
         this.readFEN(startFEN);
     }
 
-    readFEN(FEN) {
-        this.whitePieces.length = 0
-        this.blackPieces.length = 0
-        const splitFEN = FEN.split(' ');
-        const dashes = ['-', '–'];
-
-        const boardFEN = splitFEN[0];
-
-        // Logic for boardFEN reading borrowed from Sebastian Lague's Coding Adventure video.
-        let file = 0, rank = 0;
-
-        for (let i = 0; i < boardFEN.length; i++) {
-            const char = boardFEN.charAt(i);
-            if (char == '/') {
-                file = 0;
-                rank++;
-            } else {
-                if (char >= '0' && char <= '9') {
-                    file += parseInt(char);
-                } else {
-                    const colour = char == char.toUpperCase() ? 'w' : 'b';
-                    const type = char.toLowerCase();
-                    this.addPiece(type, colour, file, rank);
-                    file++;
-                }
-            }
-        }
-
-        const moveFEN = splitFEN[1];
-        this.turn = moveFEN == 'w' ? true : false;
-
-        const castlingFEN = splitFEN[2];
-        if (!dashes.includes(castlingFEN)) {
-            for (let i = 0; i < castlingFEN.length; i++) {
-                const char = castlingFEN.charAt(i);
-                const x = char == char.toUpperCase() ? 7 : 0;
-                const y = char.toLowerCase() == 'k' ? 7 : 0;
-                const rook = this.getPieceAt(x, y);
-                const king = this.getPieceAt(4, y);
-                if (rook && king) {
-                    rook.hasMoved = false;
-                    king.hasMoved = false;
-                } else {
-                    console.log('Invalid castling in FEN string.');
-                }
-            }
-        }
-
-        const enPassantFEN = splitFEN[3];
-        if (!dashes.includes(enPassantFEN)) {
-            let [cx, cy] = enPassantFEN.split('');
-            let [x, y] = this.convertNotation(cx, cy);
-            const piece = this.getPieceAt(x, y);
-            if (piece && piece.type == 'pawn') {
-                this.enPassant = piece;
-            } else {
-                console.log('Invalid en passant square in FEN string.');
-            }
-        }
+    getCharacter(type, isWhite) {
+        let character = type[0];
+        if (type == 'knight') character = 'n';
+        if (isWhite) character = character.toUpperCase();
+        return character;
     }
 
     getPieceAt(x, y) {
@@ -118,16 +69,58 @@ class Board {
     }
 
     move(x, y) {
+        if (!this.turn) this.fullMoveClock++;
         this.lastEnPassant = this.enPassant;
         this.enPassant = null;
         let castle = false;
         if (this.selected.type == 'king' && abs(x - this.selected.matrixposition.x) == 2) castle = true;
-        this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), this.getPieceAt(x, y), castle));
+        const prevPos = this.selected.matrixposition;
         this.selected.move(x, y);
+        const taken = this.getPieceAt(x, y) == this.selected ? null : this.getPieceAt(x, y);
+        this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), taken, castle));
         this.turn = !this.turn; // Swap turns
 
-        if (this.whiteMoves() == 0 || this.blackMoves() == 0) {
-            console.log('Checkmate!');
+
+        // Checkmate & Stalemate.
+        if (this.whiteMoves() == 0) {
+            if (this.whitePieces.find(e => e.type == 'king').inCheck()) {
+                console.log('Checkmate!');
+            } else {
+                console.log('Draw: Stalemate!');
+            }
+            this.frozen = true;
+        } else if (this.blackMoves() == 0) {
+            if (this.blackPieces.find(e => e.type == 'king').inCheck()) {
+                console.log('Checkmate!');
+            } else {
+                console.log('Draw: Stalemate!');
+            }
+            this.frozen = true;
+        }
+
+        // Threefold Repetition
+        if (this.moves.length > 5) {
+            const moves = [startFEN.split(' ')[0]];
+            this.moves.forEach(({ FEN }) => moves.push(FEN.split(' ')[0]));
+            let count = 0;
+            for (let i = 0; i < moves.length; i++) {
+                const FEN = moves[i];
+                let count = 0;
+                moves.forEach((compareFEN) => {
+                    if (FEN == compareFEN) count++;
+                });
+                if (count >= 3) {
+                    console.log('Draw: Threefold Repetition!');
+                    this.frozen = true;
+                    break;
+                }
+            }
+        }
+
+        // Fifty-Move Rule
+        const check = (move) => move.piece.type == 'pawn' || move.taken;
+        if (this.halfMoveClock >= 100 && !this.moves.some(check)) {
+            console.log('Draw: Fifty-Move Rule!');
             this.frozen = true;
         }
     }
@@ -138,11 +131,9 @@ class Board {
             this.drawnLastMove = moves.length;
 
             const { startSquare, targetSquare } = moves[moves.length - 1];
-            // main.fill(255, 0, 0, 50);
             main.fill(202, 158, 94, 115);
             main.rect(startSquare.x * tilesize, startSquare.y * tilesize, tilesize, tilesize);
             main.rect(targetSquare.x * tilesize, targetSquare.y * tilesize, tilesize, tilesize);
-
         }
 
         for (let i = 0; i < this.whitePieces.length; i++) {
@@ -165,13 +156,6 @@ class Board {
         }
     }
 
-    convertNotation(cx, cy) {
-        const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-        let x = alphabet.indexOf(cx);
-        let y = 8 - cy;
-        return [x, y];
-    }
-
     whiteMoves() {
         let moves = 0;
         for (let i = 0; i < this.whitePieces.length; i++) {
@@ -192,6 +176,151 @@ class Board {
             moves += piece.moves.length;
         }
         return moves;
+    }
+
+    convertNotation(cx, cy) {
+        const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        const x = alphabet.indexOf(cx);
+        const y = 8 - cy;
+        return [x, y];
+    }
+
+    getNotation(cx, cy) {
+        const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        const x = alphabet[cx];
+        const y = 8 - cy;
+        return [x, y];
+    }
+
+    readFEN(FEN) {
+        this.whitePieces.length = 0;
+        this.blackPieces.length = 0;
+        const splitFEN = FEN.split(' ');
+        const dashes = ['-', '–'];
+
+        const boardFEN = splitFEN[0];
+
+        // Logic for boardFEN reading borrowed from Sebastian Lague's Coding Adventure video.
+        let file = 0, rank = 0;
+
+        for (let i = 0; i < boardFEN.length; i++) {
+            const char = boardFEN.charAt(i);
+            if (char == '/') {
+                file = 0;
+                rank++;
+            } else {
+                if (char >= '0' && char <= '9') {
+                    file += parseInt(char);
+                } else {
+                    const colour = char == char.toUpperCase() ? 'w' : 'b';
+                    const type = char.toLowerCase();
+                    this.addPiece(type, colour, file, rank);
+                    file++;
+                }
+            }
+        }
+
+        const moveFEN = splitFEN[1];
+        this.turn = moveFEN == 'w' ? true : false;
+
+        const castlingFEN = splitFEN[2];
+        if (!dashes.includes(castlingFEN)) {
+            for (let i = 0; i < castlingFEN.length; i++) {
+                const char = castlingFEN.charAt(i);
+                const x = char.toLowerCase() == 'k' ? 7 : 0;
+                const y = char == char.toUpperCase() ? 7 : 0;
+                const rook = this.getPieceAt(x, y);
+                const king = this.getPieceAt(4, y);
+                if (rook && king) {
+                    rook.hasMoved = false;
+                    king.hasMoved = false;
+                } else {
+                    console.log('Invalid castling in FEN string:', char);
+                }
+            }
+        }
+
+        const enPassantFEN = splitFEN[3];
+        if (!dashes.includes(enPassantFEN)) {
+            let [cx, cy] = enPassantFEN.split('');
+            let [x, y] = this.convertNotation(cx, cy);
+            const direction = this.turn ? 1 : -1;
+            const piece = this.getPieceAt(x, y + direction);
+            if (piece && piece.type == 'pawn') {
+                this.enPassant = piece;
+            } else {
+                console.log('Invalid en passant square in FEN string.');
+            }
+        }
+
+        this.halfMoveClock = splitFEN[4];
+        this.fullMoveClock = splitFEN[5];
+    }
+
+    generateFEN() {
+        let FEN = [];
+
+        // boardFEN
+        for (let y = 0; y < 8; y++) {
+            let file = [];
+            let gap = 0;
+            for (let x = 0; x < 8; x++) {
+                const piece = this.getPieceAt(x, y);
+                if (piece) {
+                    if (gap) file.push(gap);
+                    file.push(this.getCharacter(piece.type, piece.isWhite));
+                    gap = 0;
+                } else {
+                    gap++;
+                }
+            }
+            if (file.length) FEN = FEN.concat(file);
+            if (gap) FEN.push(gap);
+            if (y != 7) FEN.push('/');
+        }
+        FEN.push(' ');
+
+        // Active colour
+        const ac = !board.turn ? 'w' : 'b';
+        FEN.push(ac, ' ');
+
+        // Castling
+        const castling = []
+        for (let w = 1; w >= 0; w--) {
+            const y = w ? 7 : 0;
+            const king = this.getPieceAt(4, y);
+            if (king && !king.hasMoved) {
+                for (let x = 7; x >= 0; x -= 7) {
+                    const rook = this.getPieceAt(x, y);
+                    if (rook && !rook.hasMoved) {
+                        let char = !x ? 'q' : 'k';
+                        if (w) char = char.toUpperCase();
+                        castling.push(char);
+                    }
+                }
+            }
+        }
+        FEN = FEN.concat(castling);
+        if (castling.length == 0) FEN.push('-');
+        FEN.push(' ');
+
+        // En passant
+        if (this.enPassant) {
+            const [x, y] = this.getNotation(this.enPassant.matrixposition.x, this.enPassant.matrixposition.y);
+            const direction = this.turn ? -1 : 1;
+            FEN.push(x, y + direction);
+        } else {
+            FEN.push('-');
+        }
+        FEN.push(' ');
+
+        // Halfmove
+        FEN.push(this.halfMoveClock, ' ');
+
+        // Fullmove
+        FEN.push(this.fullMoveClock);
+
+        return FEN.join('');
     }
 
     promote(pawn, selectionMade = false, promoteTo = null) {

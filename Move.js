@@ -5,5 +5,13 @@ class Move {
         this.targetSquare = targetSquare;
         this.taken = taken;
         this.castle = castle;
+
+        if (piece.type == 'pawn' || taken) {
+            board.halfMoveClock = 0;
+        } else {
+            board.halfMoveClock++;
+        }
+
+        this.FEN = board.generateFEN();
     }
 }
