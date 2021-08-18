@@ -2,7 +2,7 @@ const tilesize = 75;
 const images = {};
 const piece_type = ['king', 'queen', 'bishop', 'knight', 'rook', 'pawn'];
 
-let canvas, board, main, highlights;
+let canvas, board, main, highlights, ui;
 
 function setup() {
 	console.log('Hello :)');
@@ -13,6 +13,7 @@ function setup() {
 
 	main = createGraphics(width, height);
 	highlights = createGraphics(width, height);
+	ui = createGraphics(width, height);
 
 	for (let i = 0; i < piece_type.length; i++) {
 		const type = piece_type[i];
@@ -32,6 +33,7 @@ function draw() {
 	board.show();
 	image(main, 0, 0);
 	image(highlights, 0, 0);
+	image(ui, 0, 0);
 }
 
 function drawBoard() {

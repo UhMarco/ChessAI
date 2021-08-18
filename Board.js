@@ -2,6 +2,7 @@ const startFEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 class Board {
     constructor() {
+        this.frozen = false;
         this.turn = true; // true = white
         this.whitePieces = [];
         this.blackPieces = [];
@@ -95,7 +96,7 @@ class Board {
     }
 
     select(piece) {
-        if (piece.isWhite == this.turn) {
+        if (!this.frozen && piece.isWhite == this.turn) {
             this.selected = piece;
             piece.select();
             main.fill(0, 0, 0, 80);
