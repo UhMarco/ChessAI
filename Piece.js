@@ -135,24 +135,28 @@ class Piece {
             const [x, y] = move;
             this.matrixposition = createVector(x, y);
             for (let i = 0; i < enemyPieces.length; i++) { // iterate through enemies
-                const enemy = enemyPieces[i];
-                if (!enemy.taken) {
-                    enemy.generateMoves();
+                if (moves.indexOf(move) != -1) {
+                    const enemy = enemyPieces[i];
+                    if (!enemy.taken) {
+                        enemy.generateMoves();
 
-                    for (let j = 0; j < enemy.moves.length; j++) { // iterate through enemy moves
-                        const [enemyX, enemyY] = enemy.moves[j];
+                        for (let j = 0; j < enemy.moves.length; j++) { // iterate through enemy moves
+                            const [enemyX, enemyY] = enemy.moves[j];
 
-                        if (this.type != 'king' && enemy.type != 'knight') {
-                            if (enemyX == kingPos.x && enemyY == kingPos.y) {
-                                if (x != enemy.matrixposition.x || y != enemy.matrixposition.y) {
+                            if (this.type != 'king' && enemy.type != 'knight') {
+                                if (enemyX == kingPos.x && enemyY == kingPos.y) {
+                                    if (x != enemy.matrixposition.x || y != enemy.matrixposition.y) {
+                                        let index = moves.indexOf(move);
+                                        moves.splice(index, 1);
+                                        break;
+                                    }
+                                }
+                            } else if (this.type == 'king') {
+                                if (x == enemyX && y == enemyY) {
                                     let index = moves.indexOf(move);
                                     moves.splice(index, 1);
+                                    break;
                                 }
-                            }
-                        } else if (this.type == 'king') {
-                            if (x == enemyX && y == enemyY) {
-                                let index = moves.indexOf(move);
-                                moves.splice(index, 1);
                             }
                         }
                     }
