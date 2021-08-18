@@ -26,22 +26,13 @@ class Pawn extends Piece {
             }
         }
 
+        super.move(x, y);
+
         // Pawn promotion
-        /*
         const finalY = this.isWhite ? 0 : 7;
         if (y == finalY) {
-            board.frozen = true;
-            ui.noStroke();
-            ui.fill(0, 0, 0, 150);
-            const boxWidth = 350;
-            const boxHeight = 200;
-            ui.rect(width / 2 - boxWidth / 2, height / 2 - boxHeight / 2, boxWidth, boxHeight, 20);
-            const index = this.isWhite ? 0 : 1;
-            ui.image(images['queen'][index], width / 2 - boxWidth / 2, 0);
+            board.promote(this);
         }
-        */
-
-        super.move(x, y);
     }
 
     generateMoves() {
