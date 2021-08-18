@@ -16,7 +16,7 @@ class Board {
     }
 
     setupPieces() {
-        this.readFEN('k/4P/8/8/8/8/PPPPPPPp/RNBQKBN w - - 0 1');
+        this.readFEN(startFEN);
     }
 
     readFEN(FEN) {
