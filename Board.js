@@ -125,6 +125,11 @@ class Board {
         this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), this.getPieceAt(x, y), castle));
         this.selected.move(x, y);
         this.turn = !this.turn; // Swap turns
+
+        if (this.whiteMoves() == 0 || this.blackMoves() == 0) {
+            console.log('Checkmate!');
+            this.frozen = true;
+        }
     }
 
     show() {
@@ -165,6 +170,28 @@ class Board {
         let x = alphabet.indexOf(cx);
         let y = 8 - cy;
         return [x, y];
+    }
+
+    whiteMoves() {
+        let moves = 0;
+        for (let i = 0; i < this.whitePieces.length; i++) {
+            const piece = this.whitePieces[i];
+            piece.generateMoves();
+            piece.generateLegalMoves();
+            moves += piece.moves.length;
+        }
+        return moves;
+    }
+
+    blackMoves() {
+        let moves = 0;
+        for (let i = 0; i < this.blackPieces.length; i++) {
+            const piece = this.blackPieces[i];
+            piece.generateMoves();
+            piece.generateLegalMoves();
+            moves += piece.moves.length;
+        }
+        return moves;
     }
 
     promote(pawn, selectionMade = false, promoteTo = null) {

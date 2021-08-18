@@ -83,7 +83,7 @@ function mousePressed() {
 		} else if (board.selected !== null) {
 			board.deselect(board.selected);
 		}
-	} else {
+	} else if (board.pawnToPromote) {
 		const pawn = board.pawnToPromote;
 		const { x: pawnX, y: pawnY } = pawn.matrixposition;
 		const direction = pawn.isWhite ? 1 : -1;
