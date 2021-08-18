@@ -21,12 +21,180 @@ class Board {
     }
 
     setupPieces() {
-        this.readFEN('2Q2bnr/4p1pq/5pkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR w KQ - 1 10');
+        this.readFEN(startFEN);
+    }
+
+    getCharacter(type, isWhite) {
+        let character = type[0];
+        if (type == 'knight') character = 'n';
+        if (isWhite) character = character.toUpperCase();
+        return character;
+    }
+
+    getPieceAt(x, y) {
+        for (let i = 0; i < this.whitePieces.length; i++) {
+            const piece = this.whitePieces[i];
+            if (!piece.taken && piece.matrixposition.x == x && piece.matrixposition.y == y) {
+                return piece;
+            }
+        }
+        for (let i = 0; i < this.blackPieces.length; i++) {
+            const piece = this.blackPieces[i];
+            if (!piece.taken && piece.matrixposition.x == x && piece.matrixposition.y == y) {
+                return piece;
+            }
+        }
+        return null;
+    }
+
+    select(piece) {
+        if (!this.frozen && piece.isWhite == this.turn) {
+            this.selected = piece;
+            piece.select();
+            main.fill(0, 0, 0, 80);
+            main.ellipse(piece.pixelposition.x, piece.pixelposition.y, tilesize * 1.5);
+        }
+    }
+
+    deselect(piece) {
+        this.selected = null;
+        piece.deselect();
+
+        // Remove highlighting.
+        main.clear(); // The base highlight is on the main layer.
+        highlights.clear();
+        drawBoard();
+        if (this.drawnLastMove) this.drawnLastMove -= 1; // Keep last move indication when changing selection.
+        this.showCheck();
+    }
+
+    move(x, y) {
+        if (!this.turn) this.fullMoveClock++;
+        this.lastEnPassant = this.enPassant;
+        this.enPassant = null;
+        let castle = false;
+        if (this.selected.type == 'king' && abs(x - this.selected.matrixposition.x) == 2) castle = true;
+        const prevPos = this.selected.matrixposition;
+        this.selected.move(x, y);
+        const taken = this.getPieceAt(x, y) == this.selected ? null : this.getPieceAt(x, y);
+        this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), taken, castle));
+        this.turn = !this.turn; // Swap turns
+
+
+        // Checkmate & Stalemate.
+        if (this.whiteMoves() == 0) {
+            if (this.whitePieces.find(e => e.type == 'king').inCheck()) {
+                console.log('Checkmate!');
+            } else {
+                console.log('Draw: Stalemate!');
+            }
+            this.frozen = true;
+        } else if (this.blackMoves() == 0) {
+            if (this.blackPieces.find(e => e.type == 'king').inCheck()) {
+                console.log('Checkmate!');
+            } else {
+                console.log('Draw: Stalemate!');
+            }
+            this.frozen = true;
+        }
+
+        // Threefold Repetition
+        if (this.moves.length > 5) {
+            const moves = [startFEN.split(' ')[0]];
+            this.moves.forEach(({ FEN }) => moves.push(FEN.split(' ')[0]));
+            let count = 0;
+            for (let i = 0; i < moves.length; i++) {
+                const FEN = moves[i];
+                let count = 0;
+                moves.forEach((compareFEN) => {
+                    if (FEN == compareFEN) count++;
+                });
+                if (count >= 3) {
+                    console.log('Draw: Threefold Repetition!');
+                    this.frozen = true;
+                    break;
+                }
+            }
+        }
+
+        // Fifty-Move Rule
+        const check = (move) => move.piece.type == 'pawn' || move.taken;
+        if (this.halfMoveClock >= 100 && !this.moves.some(check)) {
+            console.log('Draw: Fifty-Move Rule!');
+            this.frozen = true;
+        }
+    }
+
+    show() {
+        const moves = this.moves;
+        if (this.drawnLastMove < moves.length) {
+            this.drawnLastMove = moves.length;
+
+            const { startSquare, targetSquare } = moves[moves.length - 1];
+            main.fill(202, 158, 94, 115);
+            main.rect(startSquare.x * tilesize, startSquare.y * tilesize, tilesize, tilesize);
+            main.rect(targetSquare.x * tilesize, targetSquare.y * tilesize, tilesize, tilesize);
+        }
+
+        for (let i = 0; i < this.whitePieces.length; i++) {
+            this.whitePieces[i].show();
+        }
+        for (let i = 0; i < this.blackPieces.length; i++) {
+            this.blackPieces[i].show();
+        }
+    }
+
+    showCheck() {
+        for (let i = 0; i < 2; i++) {
+            const pieces = i == 0 ? board.whitePieces : board.blackPieces;
+            const king = pieces.find(element => element.type == 'king');
+            if (king.inCheck()) {
+                const { x, y } = king.pixelposition;
+                main.fill(255, 0, 0, 100);
+                main.rect(x - tilesize / 2, y - tilesize / 2, tilesize, tilesize);
+            }
+        }
+    }
+
+    whiteMoves() {
+        let moves = 0;
+        for (let i = 0; i < this.whitePieces.length; i++) {
+            const piece = this.whitePieces[i];
+            piece.generateMoves();
+            piece.generateLegalMoves();
+            moves += piece.moves.length;
+        }
+        return moves;
+    }
+
+    blackMoves() {
+        let moves = 0;
+        for (let i = 0; i < this.blackPieces.length; i++) {
+            const piece = this.blackPieces[i];
+            piece.generateMoves();
+            piece.generateLegalMoves();
+            moves += piece.moves.length;
+        }
+        return moves;
+    }
+
+    convertNotation(cx, cy) {
+        const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        const x = alphabet.indexOf(cx);
+        const y = 8 - cy;
+        return [x, y];
+    }
+
+    getNotation(cx, cy) {
+        const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        const x = alphabet[cx];
+        const y = 8 - cy;
+        return [x, y];
     }
 
     readFEN(FEN) {
-        this.whitePieces.length = 0
-        this.blackPieces.length = 0
+        this.whitePieces.length = 0;
+        this.blackPieces.length = 0;
         const splitFEN = FEN.split(' ');
         const dashes = ['-', '–'];
 
@@ -76,7 +244,8 @@ class Board {
         if (!dashes.includes(enPassantFEN)) {
             let [cx, cy] = enPassantFEN.split('');
             let [x, y] = this.convertNotation(cx, cy);
-            const piece = this.getPieceAt(x, y);
+            const direction = this.turn ? 1 : -1;
+            const piece = this.getPieceAt(x, y + direction);
             if (piece && piece.type == 'pawn') {
                 this.enPassant = piece;
             } else {
@@ -88,143 +257,70 @@ class Board {
         this.fullMoveClock = splitFEN[5];
     }
 
-    getPieceAt(x, y) {
-        for (let i = 0; i < this.whitePieces.length; i++) {
-            const piece = this.whitePieces[i];
-            if (!piece.taken && piece.matrixposition.x == x && piece.matrixposition.y == y) {
-                return piece;
+    generateFEN() {
+        let FEN = [];
+
+        // boardFEN
+        for (let y = 0; y < 8; y++) {
+            let file = [];
+            let gap = 0;
+            for (let x = 0; x < 8; x++) {
+                const piece = this.getPieceAt(x, y);
+                if (piece) {
+                    if (gap) file.push(gap);
+                    file.push(this.getCharacter(piece.type, piece.isWhite));
+                    gap = 0;
+                } else {
+                    gap++;
+                }
+            }
+            if (file.length) FEN = FEN.concat(file);
+            if (gap) FEN.push(gap);
+            if (y != 7) FEN.push('/');
+        }
+        FEN.push(' ');
+
+        // Active colour
+        const ac = !board.turn ? 'w' : 'b';
+        FEN.push(ac, ' ');
+
+        // Castling
+        const castling = []
+        for (let w = 1; w >= 0; w--) {
+            const y = w ? 7 : 0;
+            const king = this.getPieceAt(4, y);
+            if (king && !king.hasMoved) {
+                for (let x = 7; x >= 0; x -= 7) {
+                    const rook = this.getPieceAt(x, y);
+                    if (rook && !rook.hasMoved) {
+                        let char = !x ? 'q' : 'k';
+                        if (w) char = char.toUpperCase();
+                        castling.push(char);
+                    }
+                }
             }
         }
-        for (let i = 0; i < this.blackPieces.length; i++) {
-            const piece = this.blackPieces[i];
-            if (!piece.taken && piece.matrixposition.x == x && piece.matrixposition.y == y) {
-                return piece;
-            }
+        FEN = FEN.concat(castling);
+        if (castling.length == 0) FEN.push('-');
+        FEN.push(' ');
+
+        // En passant
+        if (this.enPassant) {
+            const [x, y] = this.getNotation(this.enPassant.matrixposition.x, this.enPassant.matrixposition.y);
+            const direction = this.turn ? -1 : 1;
+            FEN.push(x, y + direction);
+        } else {
+            FEN.push('-');
         }
-        return null;
-    }
+        FEN.push(' ');
 
-    select(piece) {
-        if (!this.frozen && piece.isWhite == this.turn) {
-            this.selected = piece;
-            piece.select();
-            main.fill(0, 0, 0, 80);
-            main.ellipse(piece.pixelposition.x, piece.pixelposition.y, tilesize * 1.5);
-        }
-    }
+        // Halfmove
+        FEN.push(this.halfMoveClock, ' ');
 
-    deselect(piece) {
-        this.selected = null;
-        piece.deselect();
+        // Fullmove
+        FEN.push(this.fullMoveClock);
 
-        // Remove highlighting.
-        main.clear(); // The base highlight is on the main layer.
-        highlights.clear();
-        drawBoard();
-        if (this.drawnLastMove) this.drawnLastMove -= 1; // Keep last move indication when changing selection.
-        this.showCheck();
-    }
-
-    move(x, y) {
-        if (!this.turn) this.fullMoveClock++;
-        this.lastEnPassant = this.enPassant;
-        this.enPassant = null;
-        let castle = false;
-        if (this.selected.type == 'king' && abs(x - this.selected.matrixposition.x) == 2) castle = true;
-        this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), this.getPieceAt(x, y), castle));
-        this.selected.move(x, y);
-        this.turn = !this.turn; // Swap turns
-
-
-        // Checkmate & Stalemate.
-        if (this.whiteMoves() == 0) {
-            if (this.whitePieces.find(e => e.type == 'king').inCheck()) {
-                console.log('Checkmate!');
-            } else {
-                console.log('Draw: Stalemate!');
-            }
-            this.frozen = true;
-        } else if (this.blackMoves() == 0) {
-            if (this.blackPieces.find(e => e.type == 'king').inCheck()) {
-                console.log('Checkmate!');
-            } else {
-                console.log('Draw: Stalemate!');
-            }
-            this.frozen = true;
-        }
-
-        // Threefold Repetition
-        // Yet to be added.
-
-        // Fifty-Move Rule
-        if (this.halfMoveClock >= 100) {
-            this.moves.forEach((move) => {
-                if (move.piece.type == 'pawn' || move.taken) break;
-            });
-            console.log('Draw: Fifty-Move Rule!');
-        }
-    }
-
-    show() {
-        const moves = this.moves;
-        if (this.drawnLastMove < moves.length) {
-            this.drawnLastMove = moves.length;
-
-            const { startSquare, targetSquare } = moves[moves.length - 1];
-            // main.fill(255, 0, 0, 50);
-            main.fill(202, 158, 94, 115);
-            main.rect(startSquare.x * tilesize, startSquare.y * tilesize, tilesize, tilesize);
-            main.rect(targetSquare.x * tilesize, targetSquare.y * tilesize, tilesize, tilesize);
-
-        }
-
-        for (let i = 0; i < this.whitePieces.length; i++) {
-            this.whitePieces[i].show();
-        }
-        for (let i = 0; i < this.blackPieces.length; i++) {
-            this.blackPieces[i].show();
-        }
-    }
-
-    showCheck() {
-        for (let i = 0; i < 2; i++) {
-            const pieces = i == 0 ? board.whitePieces : board.blackPieces;
-            const king = pieces.find(element => element.type == 'king');
-            if (king.inCheck()) {
-                const { x, y } = king.pixelposition;
-                main.fill(255, 0, 0, 100);
-                main.rect(x - tilesize / 2, y - tilesize / 2, tilesize, tilesize);
-            }
-        }
-    }
-
-    convertNotation(cx, cy) {
-        const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-        let x = alphabet.indexOf(cx);
-        let y = 8 - cy;
-        return [x, y];
-    }
-
-    whiteMoves() {
-        let moves = 0;
-        for (let i = 0; i < this.whitePieces.length; i++) {
-            const piece = this.whitePieces[i];
-            piece.generateMoves();
-            piece.generateLegalMoves();
-            moves += piece.moves.length;
-        }
-        return moves;
-    }
-
-    blackMoves() {
-        let moves = 0;
-        for (let i = 0; i < this.blackPieces.length; i++) {
-            const piece = this.blackPieces[i];
-            piece.generateMoves();
-            piece.generateLegalMoves();
-            moves += piece.moves.length;
-        }
-        return moves;
+        return FEN.join('');
     }
 
     promote(pawn, selectionMade = false, promoteTo = null) {

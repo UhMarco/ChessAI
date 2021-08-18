@@ -11,5 +11,7 @@ class Move {
         } else {
             board.halfMoveClock++;
         }
+
+        this.FEN = board.generateFEN();
     }
 }
