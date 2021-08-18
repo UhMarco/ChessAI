@@ -65,22 +65,38 @@ function hasMove(moves, x, y) {
 function mousePressed() {
 	const x = floor(mouseX / tilesize);
 	const y = floor(mouseY / tilesize);
+	if (!board.frozen) {
+		const piece = board.getPieceAt(x, y);
 
-	const piece = board.getPieceAt(x, y);
-
-	if (board.selected && hasMove(board.selected.moves, x, y)) {
-		board.move(x, y);
-		board.deselect(board.selected);
-	} else if (piece) {
-		if (piece == board.selected) {
-			board.deselect(piece);
-		} else {
-			if (board.selected) {
-				board.deselect(board.selected);
+		if (board.selected && hasMove(board.selected.moves, x, y)) {
+			board.move(x, y);
+			board.deselect(board.selected);
+		} else if (piece) {
+			if (piece == board.selected) {
+				board.deselect(piece);
+			} else {
+				if (board.selected) {
+					board.deselect(board.selected);
+				}
+				board.select(piece);
 			}
-			board.select(piece);
+		} else if (board.selected !== null) {
+			board.deselect(board.selected);
 		}
-	} else if (board.selected !== null) {
-		board.deselect(board.selected);
+	} else {
+		const pawn = board.pawnToPromote;
+		const { x: pawnX, y: pawnY } = pawn.matrixposition;
+		const direction = pawn.isWhite ? 1 : -1;
+		const selections = [];
+		for (let i = 1; i < 5; i++) {
+			selections.push([pawnX, pawnY + i * direction]);
+		}
+		selections.forEach(([cx, cy]) => {
+			if (x == cx && y == cy) {
+				const offset = pawn.isWhite ? -1 : -3;
+				const types = ['queen', 'rook', 'knight', 'bishop'];
+				return board.promote(pawn, true, types[y + offset]);
+			}
+		});
 	}
 }

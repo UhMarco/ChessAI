@@ -3,6 +3,7 @@ const startFEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 class Board {
     constructor() {
         this.frozen = false;
+        this.pawnToPromote = null;
         this.turn = true; // true = white
         this.whitePieces = [];
         this.blackPieces = [];
@@ -164,6 +165,67 @@ class Board {
         let x = alphabet.indexOf(cx);
         let y = 8 - cy;
         return [x, y];
+    }
+
+    promote(pawn, selectionMade = false, promoteTo = null) {
+        if (!selectionMade) {
+            this.frozen = true;
+            this.pawnToPromote = pawn;
+            ui.noStroke();
+            ui.fill(0, 0, 0, 150);
+            const y = pawn.isWhite ? 1 : 7;
+            const direction = pawn.isWhite ? 1 : -1;
+            ui.rect(pawn.matrixposition.x * tilesize, y * tilesize, tilesize, tilesize * direction * 4, 20);
+            const index = pawn.isWhite ? 0 : 1;
+            const types = ['queen', 'rook', 'knight', 'bishop'];
+            for (let i = 0; i < types.length; i++) {
+                let newY = pawn.isWhite ? i : i + 4;
+                ui.image(images[types[i]][index], pawn.matrixposition.x * tilesize, (newY + direction) * tilesize, tilesize, tilesize);
+            }
+        } else {
+            const { x, y } = pawn.matrixposition;
+            if (pawn.isWhite) {
+                const index = this.whitePieces.indexOf(pawn);
+                this.whitePieces.splice(index, 1);
+                switch (promoteTo) {
+                    case 'queen':
+                        this.whitePieces.push(new Queen(x, y, pawn.isWhite));
+                        break;
+                    case 'rook':
+                        this.whitePieces.push(new Rook(x, y, pawn.isWhite));
+                        break;
+                    case 'knight':
+                        this.whitePieces.push(new Knight(x, y, pawn.isWhite));
+                        break;
+                    case 'bishop':
+                        this.whitePieces.push(new Bishop(x, y, pawn.isWhite));
+                        break;
+                }
+            } else {
+                const index = this.blackPieces.indexOf(pawn);
+                this.blackPieces.splice(index, 1);
+                switch (promoteTo) {
+                    case 'queen':
+                        this.blackPieces.push(new Queen(x, y, pawn.isWhite));
+                        break;
+                    case 'rook':
+                        this.blackPieces.push(new Rook(x, y, pawn.isWhite));
+                        break;
+                    case 'knight':
+                        this.blackPieces.push(new Knight(x, y, pawn.isWhite));
+                        break;
+                    case 'bishop':
+                        this.blackPieces.push(new Bishop(x, y, pawn.isWhite));
+                        break;
+                }
+            }
+            board.frozen = false;
+            ui.clear();
+            this.pawnToPromote = null;
+            drawBoard();
+            if (this.drawnLastMove) this.drawnLastMove -= 1;
+            this.showCheck();
+        }
     }
 
     addPiece(type, colour, file, rank) {
