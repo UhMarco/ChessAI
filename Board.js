@@ -3,20 +3,25 @@ const startFEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 class Board {
     constructor() {
         this.frozen = false;
+
         this.pawnToPromote = null;
         this.turn = true; // true = white
         this.whitePieces = [];
         this.blackPieces = [];
+
+        this.selected = null;
         this.moves = [];
+        this.halfMoveClock = 0;
+        this.fullMoveClock = 0;
         this.drawnLastMove = 0;
         this.enPassant = null;
         this.lastEnPassant = null;
-        this.selected = null;
+
         this.setupPieces()
     }
 
     setupPieces() {
-        this.readFEN(startFEN);
+        this.readFEN('2Q2bnr/4p1pq/5pkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR w KQ - 1 10');
     }
 
     readFEN(FEN) {
@@ -54,15 +59,15 @@ class Board {
         if (!dashes.includes(castlingFEN)) {
             for (let i = 0; i < castlingFEN.length; i++) {
                 const char = castlingFEN.charAt(i);
-                const x = char == char.toUpperCase() ? 7 : 0;
-                const y = char.toLowerCase() == 'k' ? 7 : 0;
+                const x = char.toLowerCase() == 'k' ? 7 : 0;
+                const y = char == char.toUpperCase() ? 7 : 0;
                 const rook = this.getPieceAt(x, y);
                 const king = this.getPieceAt(4, y);
                 if (rook && king) {
                     rook.hasMoved = false;
                     king.hasMoved = false;
                 } else {
-                    console.log('Invalid castling in FEN string.');
+                    console.log('Invalid castling in FEN string:', char);
                 }
             }
         }
@@ -78,6 +83,9 @@ class Board {
                 console.log('Invalid en passant square in FEN string.');
             }
         }
+
+        this.halfMoveClock = splitFEN[4];
+        this.fullMoveClock = splitFEN[5];
     }
 
     getPieceAt(x, y) {
@@ -118,6 +126,7 @@ class Board {
     }
 
     move(x, y) {
+        if (!this.turn) this.fullMoveClock++;
         this.lastEnPassant = this.enPassant;
         this.enPassant = null;
         let castle = false;
@@ -126,9 +135,33 @@ class Board {
         this.selected.move(x, y);
         this.turn = !this.turn; // Swap turns
 
-        if (this.whiteMoves() == 0 || this.blackMoves() == 0) {
-            console.log('Checkmate!');
+
+        // Checkmate & Stalemate.
+        if (this.whiteMoves() == 0) {
+            if (this.whitePieces.find(e => e.type == 'king').inCheck()) {
+                console.log('Checkmate!');
+            } else {
+                console.log('Draw: Stalemate!');
+            }
             this.frozen = true;
+        } else if (this.blackMoves() == 0) {
+            if (this.blackPieces.find(e => e.type == 'king').inCheck()) {
+                console.log('Checkmate!');
+            } else {
+                console.log('Draw: Stalemate!');
+            }
+            this.frozen = true;
+        }
+
+        // Threefold Repetition
+        // Yet to be added.
+
+        // Fifty-Move Rule
+        if (this.halfMoveClock >= 100) {
+            this.moves.forEach((move) => {
+                if (move.piece.type == 'pawn' || move.taken) break;
+            });
+            console.log('Draw: Fifty-Move Rule!');
         }
     }
 
