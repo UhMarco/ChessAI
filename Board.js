@@ -77,7 +77,7 @@ class Board {
         const prevPos = this.selected.matrixposition;
         this.selected.move(x, y);
         const taken = this.getPieceAt(x, y) == this.selected ? null : this.getPieceAt(x, y);
-        this.moves.push(new Move(this.selected, this.selected.matrixposition, createVector(x, y), taken, castle));
+        this.moves.push(new Move(this.selected, prevPos, createVector(x, y), taken, castle));
         this.turn = !this.turn; // Swap turns
 
 
