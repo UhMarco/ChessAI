@@ -26,10 +26,7 @@ class King extends Piece {
         for (let i = 0; i < enemies.length; i++) {
             const enemy = enemies[i];
             enemy.generateMoves();
-            for (let j = 0; j < enemy.moves.length; j++) {
-                const [x, y] = enemy.moves[j];
-                if (x == this.matrixposition.x && y == this.matrixposition.y) return true;
-            }
+            if (hasMove(enemy.moves, this.matrixposition.x, this.matrixposition.y)) return true;
         }
         return false;
     }
