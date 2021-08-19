@@ -157,6 +157,12 @@ class Piece {
                                     moves.splice(index, 1);
                                     break;
                                 }
+                            } else if (enemy.type == 'knight') {
+                                if (enemyX == kingPos.x && enemyY == kingPos.y) {
+                                    let index = moves.indexOf(move);
+                                    moves.splice(index, 1);
+                                    break;
+                                }
                             }
                         }
                     }
