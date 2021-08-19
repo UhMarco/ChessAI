@@ -9,7 +9,7 @@ class RandomBot {
         pieces.forEach(piece => {
             piece.generateMoves();
             piece.generateLegalMoves();
-            if (piece.moves.length) {
+            if (!piece.taken && piece.moves.length) {
                 moves.push(piece);
             }
         });
