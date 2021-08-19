@@ -3,6 +3,7 @@ const images = {};
 const piece_type = ['king', 'queen', 'bishop', 'knight', 'rook', 'pawn'];
 
 let canvas, board, main, highlights, ui;
+let bot;
 
 function setup() {
 	console.log('Hello :)');
@@ -24,6 +25,7 @@ function setup() {
 	}
 
 	board = new Board();
+	bot = new RandomBot();
 	drawBoard();
 }
 
@@ -65,7 +67,7 @@ function hasMove(moves, x, y) {
 function mousePressed() {
 	const x = floor(mouseX / tilesize);
 	const y = floor(mouseY / tilesize);
-	if (!board.frozen) {
+	if (!board.frozen && board.turn == board.player) {
 		const piece = board.getPieceAt(x, y);
 
 		if (board.selected && hasMove(board.selected.moves, x, y)) {

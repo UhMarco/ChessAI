@@ -1,7 +1,9 @@
 const startFEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 class Board {
-    constructor() {
+    constructor(player = 'white') {
+        this.player = player == 'white' ? true : false;
+
         this.frozen = false;
 
         this.pawnToPromote = null;
@@ -68,16 +70,16 @@ class Board {
         this.showCheck();
     }
 
-    move(x, y) {
+    move(x, y, piece = this.selected) {
         if (!this.turn) this.fullMoveClock++;
         this.lastEnPassant = this.enPassant;
         this.enPassant = null;
         let castle = false;
-        if (this.selected.type == 'king' && abs(x - this.selected.matrixposition.x) == 2) castle = true;
-        const prevPos = this.selected.matrixposition;
-        this.selected.move(x, y);
-        const taken = this.getPieceAt(x, y) == this.selected ? null : this.getPieceAt(x, y);
-        this.moves.push(new Move(this.selected, prevPos, createVector(x, y), taken, castle));
+        if (piece.type == 'king' && abs(x - piece.matrixposition.x) == 2) castle = true;
+        const prevPos = piece.matrixposition;
+        piece.move(x, y);
+        const taken = this.getPieceAt(x, y) == piece ? null : this.getPieceAt(x, y);
+        this.moves.push(new Move(piece, prevPos, createVector(x, y), taken, castle));
         this.turn = !this.turn; // Swap turns
 
 
@@ -123,6 +125,8 @@ class Board {
             console.log('Draw: Fifty-Move Rule!');
             this.frozen = true;
         }
+
+        if (!board.frozen && bot.colour == this.turn) bot.move();
     }
 
     show() {
