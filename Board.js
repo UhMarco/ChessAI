@@ -163,9 +163,11 @@ class Board {
         let moves = 0;
         for (let i = 0; i < this.whitePieces.length; i++) {
             const piece = this.whitePieces[i];
-            piece.generateMoves();
-            piece.generateLegalMoves();
-            moves += piece.moves.length;
+            if (!piece.taken) {
+                piece.generateMoves();
+                piece.generateLegalMoves();
+                moves += piece.moves.length;
+            }
         }
         return moves;
     }
@@ -174,9 +176,11 @@ class Board {
         let moves = 0;
         for (let i = 0; i < this.blackPieces.length; i++) {
             const piece = this.blackPieces[i];
-            piece.generateMoves();
-            piece.generateLegalMoves();
-            moves += piece.moves.length;
+            if (!piece.taken) {
+                piece.generateMoves();
+                piece.generateLegalMoves();
+                moves += piece.moves.length;
+            }
         }
         return moves;
     }

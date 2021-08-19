@@ -128,7 +128,7 @@ class Piece {
             const piece = pieces[i];
             piece.generateMoves();
             this.taken = false;
-            if (piece != this) {
+            if (piece != this && !piece.taken) {
                 for (let j = 0; j < piece.moves.length; j++) {
                     const [x, y] = piece.moves[j];
                     if (x == this.matrixposition.x && y == this.matrixposition.y) return true;
@@ -148,8 +148,9 @@ class Piece {
         let moves = [...this.moves];
         this.moves.forEach(move => {
             const [x, y] = move;
-            this.matrixposition = createVector(x, y);
             const piece = board.getPieceAt(x, y);
+            this.matrixposition = createVector(x, y);
+            if (piece) piece.taken = true;
             if (king.inCheck()) {
                 let index = moves.indexOf(move);
                 moves.splice(index, 1);
@@ -157,6 +158,7 @@ class Piece {
                 let index = moves.indexOf(move);
                 moves.splice(index, 1);
             }
+            if (piece) piece.taken = false;
         });
         this.matrixposition = startPos;
         this.moves = moves;
