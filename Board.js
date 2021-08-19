@@ -82,7 +82,6 @@ class Board {
         this.moves.push(new Move(piece, prevPos, createVector(x, y), taken, castle));
         this.turn = !this.turn; // Swap turns
 
-
         // Checkmate & Stalemate.
         if (this.whiteMoves() == 0) {
             if (this.whitePieces.find(e => e.type == 'king').inCheck()) {
