@@ -121,6 +121,23 @@ class Piece {
         this.pixelposition = createVector(x * tilesize + tilesize / 2, y * tilesize + tilesize / 2);
     }
 
+    defended() {
+        const pieces = this.isWhite ? board.whitePieces : board.blackPieces;
+        for (let i = 0; i < pieces.length; i++) {
+            this.taken = true;
+            const piece = pieces[i];
+            piece.generateMoves();
+            this.taken = false;
+            if (piece != this) {
+                for (let j = 0; j < piece.moves.length; j++) {
+                    const [x, y] = piece.moves[j];
+                    if (x == this.matrixposition.x && y == this.matrixposition.y) return true;
+                }
+            }
+        }
+        return false;
+    }
+
     generateMoves(moves) {
         this.moves = moves;
     }
@@ -129,7 +146,8 @@ class Piece {
         const startPos = this.matrixposition;
         let moves = [...this.moves];
         const enemyPieces = this.isWhite ? board.blackPieces : board.whitePieces;
-        const kingPos = this.isWhite ? board.whitePieces.find(element => element.type == 'king').matrixposition : board.blackPieces.find(element => element.type == 'king').matrixposition;
+        const king = this.isWhite ? board.whitePieces.find(element => element.type == 'king') : board.blackPieces.find(element => element.type == 'king');
+        const kingPos = king.matrixposition;
 
         this.moves.forEach(move => {
             const [x, y] = move;
@@ -152,10 +170,16 @@ class Piece {
                                     }
                                 }
                             } else if (this.type == 'king') {
-                                if (x == enemyX && y == enemyY) {
+                                if (x == enemyX && y == enemyY) { // if moving into a space covered by enemy
                                     let index = moves.indexOf(move);
                                     moves.splice(index, 1);
                                     break;
+                                } else if (board.getPieceAt(x, y)) { // if moving into enemy
+                                    if (board.getPieceAt(x, y).defended()) {
+                                        let index = moves.indexOf(move);
+                                        moves.splice(index, 1);
+                                        break;
+                                    }
                                 }
                             } else if (enemy.type == 'knight') {
                                 if (enemyX == kingPos.x && enemyY == kingPos.y) {
@@ -169,7 +193,6 @@ class Piece {
                 }
             }
         });
-
         this.matrixposition = startPos;
         this.moves = moves;
     }
