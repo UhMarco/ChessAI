@@ -25,8 +25,10 @@ class King extends Piece {
         const enemies = this.isWhite ? board.blackPieces : board.whitePieces;
         for (let i = 0; i < enemies.length; i++) {
             const enemy = enemies[i];
-            enemy.generateMoves();
-            if (!enemy.taken && hasMove(enemy.moves, this.matrixposition.x, this.matrixposition.y)) return true;
+            if (enemy.type != 'king') {
+                enemy.generateMoves();
+                if (!enemy.taken && hasMove(enemy.moves, this.matrixposition.x, this.matrixposition.y)) return true;
+            }
         }
         return false;
     }
@@ -52,9 +54,14 @@ class King extends Piece {
         for (let x = 0; x < 8; x += 7) {
             const y = this.matrixposition.y;
             const piece = board.getPieceAt(x, y);
-            if (piece && !this.blocked(x, y) && !this.hasMoved && piece.type == 'rook' && !piece.hasMoved) {
+            if (!this.inCheck() && piece && !this.blocked(x, y) && !this.hasMoved && piece.type == 'rook' && !piece.hasMoved) {
                 const direction = x == 0 ? -1 : 1;
-                moves.push([this.matrixposition.x + direction * 2, y]);
+                let clear = true;
+                const enemies = this.isWhite ? board.blackPieces : board.whitePieces;
+                enemies.forEach(enemy => {
+                    if (hasMove(enemy.moves, this.matrixposition.x + direction, y)) clear = false;
+                });
+                if (clear) moves.push([this.matrixposition.x + direction * 2, y]);
             }
         }
 

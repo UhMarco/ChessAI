@@ -99,6 +99,18 @@ class Board {
             this.frozen = true;
         }
 
+        const remaining = [];
+        this.whitePieces.forEach((p) => {
+            if (!p.taken) remaining.push(p);
+        });
+        this.blackPieces.forEach((p) => {
+            if (!p.taken) remaining.push(p);
+        });
+        if (remaining.length == 2) {
+            console.log('Draw: Stalemate!');
+            this.frozen = true;
+        }
+
         // Threefold Repetition
         if (this.moves.length > 5) {
             const moves = [startFEN.split(' ')[0]];
@@ -119,8 +131,7 @@ class Board {
         }
 
         // Fifty-Move Rule
-        const check = (move) => move.piece.type == 'pawn' || move.taken;
-        if (this.halfMoveClock >= 100 && !this.moves.some(check)) {
+        if (this.halfMoveClock >= 100) {
             console.log('Draw: Fifty-Move Rule!');
             this.frozen = true;
         }
@@ -163,9 +174,11 @@ class Board {
         let moves = 0;
         for (let i = 0; i < this.whitePieces.length; i++) {
             const piece = this.whitePieces[i];
-            piece.generateMoves();
-            piece.generateLegalMoves();
-            moves += piece.moves.length;
+            if (!piece.taken) {
+                piece.generateMoves();
+                piece.generateLegalMoves();
+                moves += piece.moves.length;
+            }
         }
         return moves;
     }
@@ -174,9 +187,11 @@ class Board {
         let moves = 0;
         for (let i = 0; i < this.blackPieces.length; i++) {
             const piece = this.blackPieces[i];
-            piece.generateMoves();
-            piece.generateLegalMoves();
-            moves += piece.moves.length;
+            if (!piece.taken) {
+                piece.generateMoves();
+                piece.generateLegalMoves();
+                moves += piece.moves.length;
+            }
         }
         return moves;
     }
