@@ -28,6 +28,10 @@ class Piece {
         }
     }
 
+    updateGraphics() {
+        this.pixelposition = createVector(this.matrixposition.x * tilesize + tilesize / 2, this.matrixposition.y * tilesize + tilesize / 2);
+    }
+
     select() {
         this.selected = true;
         this.generateMoves();
