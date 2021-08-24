@@ -8,6 +8,7 @@ class Board {
 
         this.pawnToPromote = null;
         this.turn = true; // true = white
+        this.pieces = [];
         this.whitePieces = [];
         this.blackPieces = [];
 
@@ -34,19 +35,13 @@ class Board {
     }
 
     getPieceAt(x, y) {
-        for (let i = 0; i < this.whitePieces.length; i++) {
-            const piece = this.whitePieces[i];
+        let found = null;
+        this.pieces.forEach((piece) => {
             if (!piece.taken && piece.matrixposition.x == x && piece.matrixposition.y == y) {
-                return piece;
+                found = piece;
             }
-        }
-        for (let i = 0; i < this.blackPieces.length; i++) {
-            const piece = this.blackPieces[i];
-            if (!piece.taken && piece.matrixposition.x == x && piece.matrixposition.y == y) {
-                return piece;
-            }
-        }
-        return null;
+        });
+        return found;
     }
 
     select(piece) {
@@ -100,11 +95,8 @@ class Board {
         }
 
         const remaining = [];
-        this.whitePieces.forEach((p) => {
-            if (!p.taken) remaining.push(p);
-        });
-        this.blackPieces.forEach((p) => {
-            if (!p.taken) remaining.push(p);
+        this.pieces.forEach((piece) => {
+            if (!piece.taken) remaining.push(piece);
         });
         if (remaining.length == 2) {
             console.log('Draw: Stalemate!');
@@ -150,12 +142,7 @@ class Board {
             main.rect(targetSquare.x * tilesize, targetSquare.y * tilesize, tilesize, tilesize);
         }
 
-        for (let i = 0; i < this.whitePieces.length; i++) {
-            this.whitePieces[i].show();
-        }
-        for (let i = 0; i < this.blackPieces.length; i++) {
-            this.blackPieces[i].show();
-        }
+        this.pieces.forEach((piece) => piece.show());
     }
 
     showCheck() {
@@ -237,6 +224,7 @@ class Board {
                 }
             }
         }
+        this.pieces = this.whitePieces.concat(this.blackPieces);
 
         const moveFEN = splitFEN[1];
         this.turn = moveFEN == 'w' ? true : false;
@@ -393,6 +381,7 @@ class Board {
                         break;
                 }
             }
+            this.pieces = this.whitePieces.concat(this.blackPieces);
             board.frozen = false;
             ui.clear();
             this.pawnToPromote = null;

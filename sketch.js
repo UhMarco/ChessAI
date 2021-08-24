@@ -1,16 +1,14 @@
-const tilesize = 75;
+let canvas, board, tilesize, main, highlights, ui, bot;
+
 const images = {};
 const piece_type = ['king', 'queen', 'bishop', 'knight', 'rook', 'pawn'];
-
-let canvas, board, main, highlights, ui;
-let bot;
 
 function setup() {
 	console.log('Hello :)');
 
-	const width = 600;
-	const height = 600;
-	canvas = createCanvas(width, height);
+	const wd = Math.min(windowWidth * 0.8, windowHeight * 0.8);
+	tilesize = wd / 8;
+	canvas = createCanvas(wd, wd);
 
 	main = createGraphics(width, height);
 	highlights = createGraphics(width, height);
@@ -30,8 +28,6 @@ function setup() {
 }
 
 function draw() {
-	canvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
-
 	board.show();
 	image(main, 0, 0);
 	image(highlights, 0, 0);
@@ -43,15 +39,23 @@ function drawBoard() {
 		for (let y = 0; y < 8; y++) {
 			if ((x + y) % 2 === 0) { // white
 				main.fill('#EBEDF1');
-				// main.fill('#EBECD0');
 			} else { // black
 				main.fill('#7A8191');
-				// main.fill('#779556');
 			}
 			main.noStroke();
 			main.rect(x * tilesize, y * tilesize, tilesize, tilesize);
 		}
 	}
+}
+
+function windowResized() {
+	const wd = Math.min(windowWidth * 0.8, windowHeight * 0.8);
+	tilesize = wd / 8;
+	resizeCanvas(wd, wd);
+	// main.clear();
+	drawBoard();
+	board.pieces.forEach((piece) => piece.updateGraphics());
+	board.show();
 }
 
 function hasMove(moves, x, y) {
