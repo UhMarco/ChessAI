@@ -4,11 +4,13 @@
   <p align="center">
     <a href="https://github.com/UhMarco/ChessAI/">View Main Project</a>
     ·
+    <a href="https://uhmarco.github.io/ChessPrototype">Play Prototype</a>
+    ·
     <a href="https://github.com/UhMarco/ChessAI/issues">Report Bug</a>
   </p>
 </p>
 
-This is a prototype for a chess AI I am working on. The purpose of this was to test design choices and get some practice before making a "production" version.
+This is a prototype for a chess AI I am working on. The purpose of this was to test design choices and get some practice before making a "production" version. The bot makes random moves as no AI will be implemented on this version.
 
 ## Known issues:
 * After white promoting a pawn, the bot will stop making moves.
