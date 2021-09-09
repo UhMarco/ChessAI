@@ -2,11 +2,9 @@
   <img src="assets/images/icon.png" alt="Logo" width="80" height="80">
   <h1 align="center">ChessAI Prototype</h1>
   <p align="center">
-    <a href="https://github.com/UhMarco/ChessAI/">View Main Project</a>
-    ·
     <a href="https://uhmarco.github.io/ChessPrototype">Play Prototype</a>
     ·
-    <a href="https://github.com/UhMarco/ChessAI/issues">Report Bug</a>
+    <a href="https://github.com/UhMarco/ChessAI/issues">View Issues</a>
   </p>
 </p>
 
