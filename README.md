@@ -20,6 +20,7 @@ This is a prototype for a chess AI I am working on. The purpose of this was to t
 ## Built with
 * [p5.js](https://p5js.org/)
 * [GitHub Pages](https://pages.github.com)
+* [Pieces from chess.com](https://www.chess.com/)
 
 ## Acknowledgements
 I took inspiration for this project from these videos:
